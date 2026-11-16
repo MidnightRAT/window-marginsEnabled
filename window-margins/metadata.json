@@ -1,7 +1,7 @@
 {
     "KPlugin": {
         "Name": "Window Margins",
-        "Description": "New windows open with 5 px margins from screen edges and visible panels",
+        "Description": "New windows open with 8 px margins from screen edges and visible panels",
         "Icon": "preferences-system-windows",
         "Authors": [
             {
