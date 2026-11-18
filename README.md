@@ -78,8 +78,9 @@ qdbus org.kde.KWin /KWin reconfigure
 ### Список виключень
 
 Константа `EXCEPTIONS` у тому ж файлі містить імена вікон, до яких правила відступів
-**не** застосовуються. Порівняння відбувається за `resourceClass`, `resourceName`
-та `caption` (заголовок) вікна (без урахування регістру; для `caption` — по підстрокі).
+**не** застосовуються. Порівняння відбувається за `resourceClass`, `resourceName`,
+`windowClass` та `caption` (заголовок) вікна (без урахування регістру, за підрядком
+— достатньо, щоб ім'я з списку містилося в будь-якому з цих полів).
 
 За замовчуванням у списку: `spectacle` (скріншоти / скрінсейвер), `xscreensaver`,
 `kscreenlocker`.
@@ -101,20 +102,20 @@ var EXCEPTIONS = [
 
 Якщо виключення не спрацьовує (наприклад, вікно `spectacle` все одно стрибає),
 увімкніть діагностику: поставьте `var DEBUG = true;` у початку `main.js`, перезавантажте
-скрипт і подивіться журнал KWin:
+скрипт і подивіться файл логів:
 
 ```bash
-journalctl --user -f | grep window-margins
+tail -f /tmp/window-margins-debug.log
 ```
 
-У журналі з'явиться рядок кожного нового вікна, наприклад:
+Кожен новий вікно записує свій рядок, наприклад:
 
 ```
-window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle normalWindow=true
+window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle windowClass=spectacle normalWindow=true
 ```
 
-Скопуйте відповідне ім'я (`resourceName`, `resourceClass` або частину `caption`) у
-список `EXCEPTIONS`, перезавантажте скрипт і зніміть `DEBUG`.
+Скопуйте підходитьме ім'я (`resourceName`, `resourceClass`, `windowClass` або частину
+`caption`) у список `EXCEPTIONS`, перезавантажте скрипт і зніміть `DEBUG`.
 
 ### Перевірка
 
@@ -250,7 +251,8 @@ qdbus org.kde.KWin /KWin reconfigure
 
 The `EXCEPTIONS` constant in the same file lists window names to which the margin rules
 are **not** applied. Comparison is done against the window's `resourceClass`,
-`resourceName` and `caption` (title) (case-insensitive; for `caption` — substring match).
+`resourceName`, `windowClass` and `caption` (title) (case-insensitive, substring match —
+it is enough that an entry from the list is contained in any of these fields).
 
 By default the list contains: `spectacle` (screenshots/screensaver), `xscreensaver`,
 `kscreenlocker`.
@@ -272,20 +274,20 @@ After changing, reload the script (see above).
 
 If the exception does not take effect (for example, the `spectacle` window still jumps),
 enable diagnostics: set `var DEBUG = true;` at the top of `main.js`, reload the script
-and watch the KWin journal:
+and watch the log file:
 
 ```bash
-journalctl --user -f | grep window-margins
+tail -f /tmp/window-margins-debug.log
 ```
 
 A line appears for every new window, for example:
 
 ```
-window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle normalWindow=true
+window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle windowClass=spectacle normalWindow=true
 ```
 
-Copy the matching name (`resourceName`, `resourceClass` or part of `caption`) into the
-`EXCEPTIONS` list, reload the script and turn `DEBUG` off.
+Copy the matching value (`resourceName`, `resourceClass`, `windowClass` or part of
+`caption`) into the `EXCEPTIONS` list, reload the script and turn `DEBUG` off.
 
 ### Verification
 

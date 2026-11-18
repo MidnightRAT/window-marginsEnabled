@@ -12,44 +12,47 @@ var EXCEPTIONS = [
     "kscreenlocker"
 ];
 
-// Увімкніть true, щоб у журналі KWin (journalctl --user -f) виводилися
-// resourceClass, resourceName і caption кожного нового вікна.
-// Це допоможе підібрати правильні імена для EXCEPTIONS.
+// Увімкніть true, щоб бачити дані кожного нового вікна у файлі
+// /tmp/window-margins-debug.log (і в журналі KWin, якщо print там доступний).
+// Це допоможе підіbraти правильні імена для EXCEPTIONS.
 var DEBUG = false;
 
 function logWindow(win) {
     if (!DEBUG || !win) {
         return;
     }
-    print("window-margins: added caption=" + (win.caption || "-") +
-          " resourceName=" + (win.resourceName || "-") +
-          " resourceClass=" + (win.resourceClass || "-") +
-          " normalWindow=" + win.normalWindow);
+    var msg = "window-margins: added caption=" + (win.caption || "-") +
+              " resourceName=" + (win.resourceName || "-") +
+              " resourceClass=" + (win.resourceClass || "-") +
+              " windowClass=" + (win.windowClass || "-") +
+              " normalWindow=" + win.normalWindow;
+    print(msg);
+    // Записуємо у файл, бо print з KWin-скрипта не завжди потрапляє в journalctl
+    try {
+        var f = new File("/tmp/window-margins-debug.log");
+        f.open(QIODevice.WriteOnly | QIODevice.Append);
+        f.write(msg + "\n");
+        f.close();
+    } catch (e) {
+        // файлове логування не обов'язкове
+    }
+}
+
+function contains(haystack, needle) {
+    if (!haystack) {
+        return false;
+    }
+    return haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
 }
 
 function matchesException(win) {
     if (!win) {
         return false;
     }
-    var names = [win.resourceClass, win.resourceName];
-    for (var i = 0; i < names.length; i++) {
-        var name = names[i];
-        if (!name) {
-            continue;
-        }
-        var lower = name.toLowerCase();
+    var fields = [win.resourceClass, win.resourceName, win.windowClass, win.caption];
+    for (var i = 0; i < fields.length; i++) {
         for (var j = 0; j < EXCEPTIONS.length; j++) {
-            if (lower === EXCEPTIONS[j].toLowerCase()) {
-                return true;
-            }
-        }
-    }
-    // Також перевіряємо заголовок вікна (caption) на вхід у виключення
-    var caption = win.caption;
-    if (caption) {
-        var lowerCaption = caption.toLowerCase();
-        for (var j = 0; j < EXCEPTIONS.length; j++) {
-            if (lowerCaption.indexOf(EXCEPTIONS[j].toLowerCase()) !== -1) {
+            if (contains(fields[i], EXCEPTIONS[j])) {
                 return true;
             }
         }
