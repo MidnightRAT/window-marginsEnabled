@@ -50,18 +50,7 @@ function matchesException(win) {
     return false;
 }
 
-function place(win) {
-    if (!win || !win.normalWindow) {
-        return;
-    }
-
-    logWindow(win);
-
-    // Не чіпаємо вікна зі списку виключень (скріншоти, скрінсейвери тощо).
-    if (matchesException(win)) {
-        return;
-    }
-
+function applyMargins(win) {
     var area = workspace.clientArea(KWin.MaximizeArea, win);
     var rect = {
         x: area.x + MARGIN,
@@ -106,6 +95,37 @@ function place(win) {
         return;
     }
     win.frameGeometry = rect;
+}
+
+function place(win) {
+    if (!win || !win.normalWindow) {
+        return;
+    }
+
+    logWindow(win);
+
+    // Не чіпаємо вікна зі списку виключень (скріншоти, скрінсейвери тощо).
+    if (matchesException(win)) {
+        return;
+    }
+
+    // Під час windowAdded властивості вікна (resourceClass, caption тощо)
+    // можуть ще не бути доступні, особливо на Wayland. Отже виключення
+    // може не спрацювати одразу. Підписуємося на frameGeometryChanged:
+    // коли вікно повністю ініціалізується і змінює геометрію, властивості
+    // уже будуть надійними, і виключення спрацює гарантовано.
+    var applied = false;
+    win.frameGeometryChanged.connect(function () {
+        if (applied) {
+            return;
+        }
+        // Перевіряємо виключення ще раз — зараз властивості вікна точні.
+        if (matchesException(win)) {
+            return;
+        }
+        applyMargins(win);
+        applied = true;
+    });
 }
 
 workspace.windowAdded.connect(place);
