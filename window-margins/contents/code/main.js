@@ -3,14 +3,29 @@
 var MARGIN = 8;
 
 // Список виключень: правила відступів не застосовуються до вікни,
-// у якому resourceClass або resourceName співпадає з одним із цих імен
-// (порівняння без урахування регістру).
+// у якому resourceClass, resourceName або caption співпадає з одним із цих імен
+// (порівняння без урахування регістру; для caption — по підстрокі).
 // Наприклад: spectacle (скріншоти / скрінсейвер), xscreensaver, kscreenlocker тощо.
 var EXCEPTIONS = [
     "spectacle",
     "xscreensaver",
     "kscreenlocker"
 ];
+
+// Увімкніть true, щоб у журналі KWin (journalctl --user -f) виводилися
+// resourceClass, resourceName і caption кожного нового вікна.
+// Це допоможе підібрати правильні імена для EXCEPTIONS.
+var DEBUG = false;
+
+function logWindow(win) {
+    if (!DEBUG || !win) {
+        return;
+    }
+    print("window-margins: added caption=" + (win.caption || "-") +
+          " resourceName=" + (win.resourceName || "-") +
+          " resourceClass=" + (win.resourceClass || "-") +
+          " normalWindow=" + win.normalWindow);
+}
 
 function matchesException(win) {
     if (!win) {
@@ -29,6 +44,16 @@ function matchesException(win) {
             }
         }
     }
+    // Також перевіряємо заголовок вікна (caption) на вхід у виключення
+    var caption = win.caption;
+    if (caption) {
+        var lowerCaption = caption.toLowerCase();
+        for (var j = 0; j < EXCEPTIONS.length; j++) {
+            if (lowerCaption.indexOf(EXCEPTIONS[j].toLowerCase()) !== -1) {
+                return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -36,6 +61,8 @@ function place(win) {
     if (!win || !win.normalWindow) {
         return;
     }
+
+    logWindow(win);
 
     // Не чіпаємо вікна зі списку виключень (скріншоти, скрінсейвери тощо).
     if (matchesException(win)) {

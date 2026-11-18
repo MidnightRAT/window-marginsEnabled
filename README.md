@@ -78,8 +78,8 @@ qdbus org.kde.KWin /KWin reconfigure
 ### Список виключень
 
 Константа `EXCEPTIONS` у тому ж файлі містить імена вікон, до яких правила відступів
-**не** застосовуються. Порівняння відбувається за `resourceClass` і `resourceName`
-вікна (без урахування регістру).
+**не** застосовуються. Порівняння відбувається за `resourceClass`, `resourceName`
+та `caption` (заголовок) вікна (без урахування регістру; для `caption` — по підстрокі).
 
 За замовчуванням у списку: `spectacle` (скріншоти / скрінсейвер), `xscreensaver`,
 `kscreenlocker`.
@@ -96,6 +96,25 @@ var EXCEPTIONS = [
 ```
 
 Після зміни перезавантажте скрипт (див. вище).
+
+#### Як дізнатися фактичні імена вікна
+
+Якщо виключення не спрацьовує (наприклад, вікно `spectacle` все одно стрибає),
+увімкніть діагностику: поставьте `var DEBUG = true;` у початку `main.js`, перезавантажте
+скрипт і подивіться журнал KWin:
+
+```bash
+journalctl --user -f | grep window-margins
+```
+
+У журналі з'явиться рядок кожного нового вікна, наприклад:
+
+```
+window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle normalWindow=true
+```
+
+Скопуйте відповідне ім'я (`resourceName`, `resourceClass` або частину `caption`) у
+список `EXCEPTIONS`, перезавантажте скрипт і зніміть `DEBUG`.
 
 ### Перевірка
 
@@ -230,8 +249,8 @@ qdbus org.kde.KWin /KWin reconfigure
 ### Exceptions list
 
 The `EXCEPTIONS` constant in the same file lists window names to which the margin rules
-are **not** applied. Comparison is done against the window's `resourceClass` and
-`resourceName` (case-insensitive).
+are **not** applied. Comparison is done against the window's `resourceClass`,
+`resourceName` and `caption` (title) (case-insensitive; for `caption` — substring match).
 
 By default the list contains: `spectacle` (screenshots/screensaver), `xscreensaver`,
 `kscreenlocker`.
@@ -248,6 +267,25 @@ var EXCEPTIONS = [
 ```
 
 After changing, reload the script (see above).
+
+#### How to find the actual window names
+
+If the exception does not take effect (for example, the `spectacle` window still jumps),
+enable diagnostics: set `var DEBUG = true;` at the top of `main.js`, reload the script
+and watch the KWin journal:
+
+```bash
+journalctl --user -f | grep window-margins
+```
+
+A line appears for every new window, for example:
+
+```
+window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle normalWindow=true
+```
+
+Copy the matching name (`resourceName`, `resourceClass` or part of `caption`) into the
+`EXCEPTIONS` list, reload the script and turn `DEBUG` off.
 
 ### Verification
 
