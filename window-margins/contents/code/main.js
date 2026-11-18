@@ -2,8 +2,43 @@
 // і від видимої панелі (зокрема плаваючої).
 var MARGIN = 8;
 
+// Список виключень: правила відступів не застосовуються до вікни,
+// у якому resourceClass або resourceName співпадає з одним із цих імен
+// (порівняння без урахування регістру).
+// Наприклад: spectacle (скріншоти / скрінсейвер), xscreensaver, kscreenlocker тощо.
+var EXCEPTIONS = [
+    "spectacle",
+    "xscreensaver",
+    "kscreenlocker"
+];
+
+function matchesException(win) {
+    if (!win) {
+        return false;
+    }
+    var names = [win.resourceClass, win.resourceName];
+    for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+        if (!name) {
+            continue;
+        }
+        var lower = name.toLowerCase();
+        for (var j = 0; j < EXCEPTIONS.length; j++) {
+            if (lower === EXCEPTIONS[j].toLowerCase()) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 function place(win) {
     if (!win || !win.normalWindow) {
+        return;
+    }
+
+    // Не чіпаємо вікна зі списку виключень (скріншоти, скрінсейвери тощо).
+    if (matchesException(win)) {
         return;
     }
 

@@ -73,6 +73,28 @@ kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
 
+### Список виключень
+
+Константа `EXCEPTIONS` у тому ж файлі містить імена вікон, до яких правила відступів
+**не** застосовуються. Порівняння відбувається за `resourceClass` і `resourceName`
+вікна (без урахування регістру).
+
+За замовчуванням у списку: `spectacle` (скріншоти / скрінсейвер), `xscreensaver`,
+`kscreenlocker`.
+
+Додайте власні імена, наприклад:
+
+```js
+var EXCEPTIONS = [
+    "spectacle",
+    "xscreensaver",
+    "kscreenlocker",
+    "my-app"
+];
+```
+
+Після зміни перезавантажте скрипт (див. вище).
+
 ### Перевірка
 
 ```bash
@@ -200,6 +222,28 @@ qdbus6 org.kde.KWin /KWin reconfigure
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
 qdbus6 org.kde.KWin /KWin reconfigure
 ```
+
+### Exceptions list
+
+The `EXCEPTIONS` constant in the same file lists window names to which the margin rules
+are **not** applied. Comparison is done against the window's `resourceClass` and
+`resourceName` (case-insensitive).
+
+By default the list contains: `spectacle` (screenshots/screensaver), `xscreensaver`,
+`kscreenlocker`.
+
+Add your own names, for example:
+
+```js
+var EXCEPTIONS = [
+    "spectacle",
+    "xscreensaver",
+    "kscreenlocker",
+    "my-app"
+];
+```
+
+After changing, reload the script (see above).
 
 ### Verification
 
