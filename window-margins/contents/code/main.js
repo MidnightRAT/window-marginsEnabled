@@ -12,20 +12,35 @@ var EXCEPTIONS = [
     "kscreenlocker"
 ];
 
-// Увімкніть true, щоб бачити дані кожного нового вікна у виводі KWin
-// (зазвичай потрапляє в journalctl --user або stderr KWin).
-// Це допоможе підібрати правильні імена для EXCEPTIONS.
-var DEBUG = true;
+// Увімкніть true, щоб бачити дані кожного нового вікна та рішення скрипта
+// (APPLIED / EXCLUDED). Діагностика йде через D-Bus у tools/kwin_dbus_probe.py,
+// бо print() з KWin-скрипта не потрапляє в journalctl. Запустіть пробу:
+//     python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
+var DEBUG = false;
+
+function debugLog(msg) {
+    if (!DEBUG) {
+        return;
+    }
+    // print() у KWin-скриптах не потрапляє в journalctl, тому діагностику
+    // відправляємо через D-Bus у tools/kwin_dbus_probe.py (див. README).
+    // Якщо проба не запущена — callDBus просто нічого не зробить.
+    try {
+        callDBus("org.hermes.kwinprobe", "/org/hermes/kwinprobe",
+                 "org.hermes.kwinprobe", "Report", msg);
+    } catch (e) {
+        // проба не запущена — ігноруємо
+    }
+}
 
 function logWindow(win) {
     if (!DEBUG || !win) {
         return;
     }
-    print("window-margins: added caption=" + (win.caption || "-") +
-          " resourceName=" + (win.resourceName || "-") +
-          " resourceClass=" + (win.resourceClass || "-") +
-          " windowClass=" + (win.windowClass || "-") +
-          " normalWindow=" + win.normalWindow);
+    debugLog("window-margins: added caption=" + (win.caption || "-") +
+             " resourceName=" + (win.resourceName || "-") +
+             " resourceClass=" + (win.resourceClass || "-") +
+             " normalWindow=" + win.normalWindow);
 }
 
 function contains(haystack, needle) {
@@ -39,7 +54,8 @@ function matchesException(win) {
     if (!win) {
         return false;
     }
-    var fields = [win.resourceClass, win.resourceName, win.windowClass, win.caption];
+    // windowClass у KWin 6 scripting API немає — лишаємо лише надійні поля.
+    var fields = [win.resourceClass, win.resourceName, win.caption];
     for (var i = 0; i < fields.length; i++) {
         for (var j = 0; j < EXCEPTIONS.length; j++) {
             if (contains(fields[i], EXCEPTIONS[j])) {
@@ -94,6 +110,8 @@ function applyMargins(win) {
     if (rect.width < 1 || rect.height < 1) {
         return;
     }
+    debugLog("window-margins: APPLIED class=" + (win.resourceClass || "-") +
+             " to " + rect.x + "," + rect.y + " " + rect.width + "x" + rect.height);
     win.frameGeometry = rect;
 }
 
@@ -106,26 +124,33 @@ function place(win) {
 
     // Не чіпаємо вікна зі списку виключень (скріншоти, скрінсейвери тощо).
     if (matchesException(win)) {
+        debugLog("window-margins: EXCLUDED class=" + (win.resourceClass || "-"));
         return;
     }
 
-    // Під час windowAdded властивості вікна (resourceClass, caption тощо)
-    // можуть ще не бути доступні, особливо на Wayland. Отже виключення
-    // може не спрацювати одразу. Підписуємося на frameGeometryChanged:
-    // коли вікно повністю ініціалізується і змінює геометрію, властивості
-    // уже будуть надійними, і виключення спрацює гарантовано.
-    var applied = false;
-    win.frameGeometryChanged.connect(function () {
-        if (applied) {
-            return;
-        }
-        // Перевіряємо виключення ще раз — зараз властивості вікна точні.
-        if (matchesException(win)) {
-            return;
-        }
-        applyMargins(win);
-        applied = true;
-    });
+    // Якщо в момент windowAdded властивості вікна ще не заповнені (бувало на
+    // Wayland), відкладаємо застосування до першої зміни геометрії, щоб
+    // повторити перевірку виключень уже з реальними значеннями.
+    if (!win.resourceClass && !win.resourceName) {
+        var settled = false;
+        win.frameGeometryChanged.connect(function () {
+            if (settled) {
+                return;
+            }
+            if (matchesException(win)) {
+                debugLog("window-margins: EXCLUDED(late) class=" + (win.resourceClass || "-"));
+                settled = true;
+                return;
+            }
+            if (win.resourceClass || win.resourceName) {
+                applyMargins(win);
+                settled = true;
+            }
+        });
+        return;
+    }
+
+    applyMargins(win);
 }
 
 workspace.windowAdded.connect(place);

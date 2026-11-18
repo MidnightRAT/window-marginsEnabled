@@ -41,7 +41,11 @@ class Probe(dbus.service.Object):
 
 DBusGMainLoop(set_as_default=True)
 bus = dbus.SessionBus()
-dbus.service.BusName(DBUS_NAME, bus)
+# The BusName object MUST be kept alive: dbus-python releases the name
+# when the object is garbage collected, so a bare call would lose the
+# name immediately and every callDBus() from a KWin script would fail
+# with ServiceUnknown.
+_bus_name = dbus.service.BusName(DBUS_NAME, bus)
 Probe(bus, DBUS_PATH)
 print("probe service ready, writing to " + OUT, flush=True)
 GLib.MainLoop().run()

@@ -78,9 +78,10 @@ qdbus org.kde.KWin /KWin reconfigure
 ### Список виключень
 
 Константа `EXCEPTIONS` у тому ж файлі містить імена вікон, до яких правила відступів
-**не** застосовуються. Порівняння відбувається за `resourceClass`, `resourceName`,
-`windowClass` та `caption` (заголовок) вікна (без урахування регістру, за підрядком
-— достатньо, щоб ім'я з списку містилося в будь-якому з цих полів).
+**не** застосовуються. Порівняння відбувається за `resourceClass`, `resourceName`
+та `caption` (заголовок) вікна — без урахування регістру і **за підрядком**. Тому
+запис `"spectacle"` спрацьовує і для `resourceName = spectacle`, і для
+`resourceClass = org.kde.spectacle`.
 
 За замовчуванням у списку: `spectacle` (скріншоти / скрінсейвер), `xscreensaver`,
 `kscreenlocker`.
@@ -100,22 +101,35 @@ var EXCEPTIONS = [
 
 #### Як дізнатися фактичні імена вікна
 
-Якщо виключення не спрацьовує (наприклад, вікно `spectacle` все одно стрибає),
-увімкніть діагностику: поставьте `var DEBUG = true;` у початку `main.js`, перезавантажте
-скрипт і подивіться вивід KWin:
+`print()` з KWin-скрипта **не потрапляє** в `journalctl`, тому діагностика йде
+через D-Bus. Запустіть пробу в окремому вікні термінала:
 
 ```bash
-journalctl --user -f | grep window-margins
+python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
 ```
 
-У виводі з'явиться рядок кожного нового вікна, наприклад:
+Далі поставте `var DEBUG = true;` у початку `main.js`, перезавантажте скрипт
+і подивіться результат:
+
+```bash
+tail -f /tmp/kwinprobe.out
+```
+
+Для кожного нового вікна буде два рядки — про створення і про рішення скрипта:
 
 ```
-window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle windowClass=spectacle normalWindow=true
+window-margins: added caption=Не збережено* — Spectacle resourceName=spectacle resourceClass=org.kde.spectacle normalWindow=true
+window-margins: EXCLUDED class=org.kde.spectacle
 ```
 
-Скопуйте підходяще ім'я (`resourceName`, `resourceClass`, `windowClass` або частину
-`caption`) у список `EXCEPTIONS`, перезавантажте скрипт і зніміть `DEBUG`.
+для звичайного вікна замість `EXCLUDED` буде `APPLIED` із розрахованою геометрією:
+
+```
+window-margins: APPLIED class=org.kde.konsole to 8,8 1904x1016
+```
+
+Скопуйте підходяще ім'я (`resourceName`, `resourceClass` або частину `caption`)
+у список `EXCEPTIONS`, перезавантажте скрипт і поставте `DEBUG = false;`.
 
 ### Перевірка
 
@@ -251,8 +265,9 @@ qdbus org.kde.KWin /KWin reconfigure
 
 The `EXCEPTIONS` constant in the same file lists window names to which the margin rules
 are **not** applied. Comparison is done against the window's `resourceClass`,
-`resourceName`, `windowClass` and `caption` (title) (case-insensitive, substring match —
-it is enough that an entry from the list is contained in any of these fields).
+`resourceName` and `caption` (title) — case-insensitive and **by substring**, so the
+entry `"spectacle"` matches both `resourceName = spectacle` and
+`resourceClass = org.kde.spectacle`.
 
 By default the list contains: `spectacle` (screenshots/screensaver), `xscreensaver`,
 `kscreenlocker`.
@@ -272,22 +287,34 @@ After changing, reload the script (see above).
 
 #### How to find the actual window names
 
-If the exception does not take effect (for example, the `spectacle` window still jumps),
-enable diagnostics: set `var DEBUG = true;` at the top of `main.js`, reload the script
-and watch the KWin output:
+`print()` from a KWin script does **not** reach `journalctl`, so diagnostics go over
+D-Bus. Start the probe in a separate terminal:
 
 ```bash
-journalctl --user -f | grep window-margins
+python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
 ```
 
-A line appears for every new window, for example:
+Then set `var DEBUG = true;` at the top of `main.js`, reload the script and watch:
+
+```bash
+tail -f /tmp/kwinprobe.out
+```
+
+Every new window produces two lines — creation and the script's decision:
 
 ```
-window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle windowClass=spectacle normalWindow=true
+window-margins: added caption=Не збережено* — Spectacle resourceName=spectacle resourceClass=org.kde.spectacle normalWindow=true
+window-margins: EXCLUDED class=org.kde.spectacle
 ```
 
-Copy the matching value (`resourceName`, `resourceClass`, `windowClass` or part of
-`caption`) into the `EXCEPTIONS` list, reload the script and turn `DEBUG` off.
+For a regular window you get `APPLIED` with the computed geometry instead:
+
+```
+window-margins: APPLIED class=org.kde.konsole to 8,8 1904x1016
+```
+
+Copy the matching value (`resourceName`, `resourceClass` or part of `caption`) into
+the `EXCEPTIONS` list, reload the script and set `DEBUG = false;`.
 
 ### Verification
 
