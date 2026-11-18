@@ -51,10 +51,12 @@ mkdir -p ~/.local/share/kwin/scripts
 cp -a window-margins ~/.local/share/kwin/scripts/
 
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
-Якщо `kwriteconfig6`/`qdbus6` недоступні:
+> **Примітка для Fedora:** у Fedora 45 команда називається `qdbus` (або `qdbus-qt6`), а не `qdbus6`. Скрипти `install.sh`/`uninstall.sh` автоматично шукають `qdbus-qt6`, `qdbus` та `qdbus6`.
+
+Якщо `kwriteconfig6`/`qdbus` недоступні:
 
 ```bash
 gdbus call --session --dest org.kde.KWin --object-path /KWin \
@@ -68,9 +70,9 @@ gdbus call --session --dest org.kde.KWin --object-path /KWin \
 
 ```bash
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
 ### Список виключень
@@ -98,7 +100,7 @@ var EXCEPTIONS = [
 ### Перевірка
 
 ```bash
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
+qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
 # має повернути true
 ```
 
@@ -123,7 +125,7 @@ python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
 ```bash
 rm -rf ~/.local/share/kwin/scripts/window-margins
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
 ### Приклад на вашій сесії
@@ -201,10 +203,12 @@ mkdir -p ~/.local/share/kwin/scripts
 cp -a window-margins ~/.local/share/kwin/scripts/
 
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
-If `kwriteconfig6`/`qdbus6` are not available:
+> **Note for Fedora:** on Fedora 45 the command is `qdbus` (or `qdbus-qt6`), not `qdbus6`. The `install.sh`/`uninstall.sh` scripts automatically look for `qdbus-qt6`, `qdbus` and `qdbus6`.
+
+If `kwriteconfig6`/`qdbus` are not available:
 
 ```bash
 gdbus call --session --dest org.kde.KWin --object-path /KWin \
@@ -218,9 +222,9 @@ After changing, reload the script:
 
 ```bash
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
 ### Exceptions list
@@ -248,7 +252,7 @@ After changing, reload the script (see above).
 ### Verification
 
 ```bash
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
+qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
 # should return true
 ```
 
@@ -273,7 +277,7 @@ Or manually:
 ```bash
 rm -rf ~/.local/share/kwin/scripts/window-margins
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
 ### Example on your session
