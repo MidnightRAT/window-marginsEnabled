@@ -102,19 +102,19 @@ var EXCEPTIONS = [
 
 Якщо виключення не спрацьовує (наприклад, вікно `spectacle` все одно стрибає),
 увімкніть діагностику: поставьте `var DEBUG = true;` у початку `main.js`, перезавантажте
-скрипт і подивіться файл логів:
+скрипт і подивіться вивід KWin:
 
 ```bash
-tail -f /tmp/window-margins-debug.log
+journalctl --user -f | grep window-margins
 ```
 
-Кожен новий вікно записує свій рядок, наприклад:
+У виводі з'явиться рядок кожного нового вікна, наприклад:
 
 ```
 window-margins: added caption=Spectacle resourceName=spectacle resourceClass=Spectacle windowClass=spectacle normalWindow=true
 ```
 
-Скопуйте підходитьме ім'я (`resourceName`, `resourceClass`, `windowClass` або частину
+Скопуйте підходяще ім'я (`resourceName`, `resourceClass`, `windowClass` або частину
 `caption`) у список `EXCEPTIONS`, перезавантажте скрипт і зніміть `DEBUG`.
 
 ### Перевірка
@@ -274,10 +274,10 @@ After changing, reload the script (see above).
 
 If the exception does not take effect (for example, the `spectacle` window still jumps),
 enable diagnostics: set `var DEBUG = true;` at the top of `main.js`, reload the script
-and watch the log file:
+and watch the KWin output:
 
 ```bash
-tail -f /tmp/window-margins-debug.log
+journalctl --user -f | grep window-margins
 ```
 
 A line appears for every new window, for example:

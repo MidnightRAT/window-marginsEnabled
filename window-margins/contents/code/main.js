@@ -12,30 +12,20 @@ var EXCEPTIONS = [
     "kscreenlocker"
 ];
 
-// Увімкніть true, щоб бачити дані кожного нового вікна у файлі
-// /tmp/window-margins-debug.log (і в журналі KWin, якщо print там доступний).
-// Це допоможе підіbraти правильні імена для EXCEPTIONS.
+// Увімкніть true, щоб бачити дані кожного нового вікна у виводі KWin
+// (зазвичай потрапляє в journalctl --user або stderr KWin).
+// Це допоможе підібрати правильні імена для EXCEPTIONS.
 var DEBUG = false;
 
 function logWindow(win) {
     if (!DEBUG || !win) {
         return;
     }
-    var msg = "window-margins: added caption=" + (win.caption || "-") +
-              " resourceName=" + (win.resourceName || "-") +
-              " resourceClass=" + (win.resourceClass || "-") +
-              " windowClass=" + (win.windowClass || "-") +
-              " normalWindow=" + win.normalWindow;
-    print(msg);
-    // Записуємо у файл, бо print з KWin-скрипта не завжди потрапляє в journalctl
-    try {
-        var f = new File("/tmp/window-margins-debug.log");
-        f.open(QIODevice.WriteOnly | QIODevice.Append);
-        f.write(msg + "\n");
-        f.close();
-    } catch (e) {
-        // файлове логування не обов'язкове
-    }
+    print("window-margins: added caption=" + (win.caption || "-") +
+          " resourceName=" + (win.resourceName || "-") +
+          " resourceClass=" + (win.resourceClass || "-") +
+          " windowClass=" + (win.windowClass || "-") +
+          " normalWindow=" + win.normalWindow);
 }
 
 function contains(haystack, needle) {
