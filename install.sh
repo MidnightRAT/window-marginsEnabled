@@ -24,16 +24,22 @@ else
     fi
 fi
 
-if command -v qdbus6 >/dev/null 2>&1; then
-    qdbus6 org.kde.KWin /KWin reconfigure
+if command -v qdbus-qt6 >/dev/null 2>&1; then
+    qdbus-qt6 org.kde.KWin /KWin reconfigure
 elif command -v qdbus >/dev/null 2>&1; then
     qdbus org.kde.KWin /KWin reconfigure
+elif command -v qdbus6 >/dev/null 2>&1; then
+    qdbus6 org.kde.KWin /KWin reconfigure
 else
     gdbus call --session --dest org.kde.KWin --object-path /KWin --method org.kde.KWin.reconfigure
 fi
 
 sleep 1
-if command -v qdbus6 >/dev/null 2>&1; then
+if command -v qdbus-qt6 >/dev/null 2>&1; then
+    qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded "$SCRIPT_ID"
+elif command -v qdbus >/dev/null 2>&1; then
+    qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded "$SCRIPT_ID"
+elif command -v qdbus6 >/dev/null 2>&1; then
     qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded "$SCRIPT_ID"
 else
     gdbus call --session --dest org.kde.KWin --object-path /Scripting --method org.kde.kwin.Scripting.isScriptLoaded "$SCRIPT_ID"

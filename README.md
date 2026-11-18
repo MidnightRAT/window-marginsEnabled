@@ -51,10 +51,12 @@ mkdir -p ~/.local/share/kwin/scripts
 cp -a window-margins ~/.local/share/kwin/scripts/
 
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
-Якщо `kwriteconfig6`/`qdbus6` недоступні:
+> **Примітка для Fedora:** у Fedora 45 команда називається `qdbus` (або `qdbus-qt6`), а не `qdbus6`. Скрипти `install.sh`/`uninstall.sh` автоматично шукають `qdbus-qt6`, `qdbus` та `qdbus6`.
+
+Якщо `kwriteconfig6`/`qdbus` недоступні:
 
 ```bash
 gdbus call --session --dest org.kde.KWin --object-path /KWin \
@@ -68,15 +70,71 @@ gdbus call --session --dest org.kde.KWin --object-path /KWin \
 
 ```bash
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
+
+### Список виключень
+
+Константа `EXCEPTIONS` у тому ж файлі містить імена вікон, до яких правила відступів
+**не** застосовуються. Порівняння відбувається за `resourceClass`, `resourceName`
+та `caption` (заголовок) вікна — без урахування регістру і **за підрядком**. Тому
+запис `"spectacle"` спрацьовує і для `resourceName = spectacle`, і для
+`resourceClass = org.kde.spectacle`.
+
+За замовчуванням у списку: `spectacle` (скріншоти / скрінсейвер), `xscreensaver`,
+`kscreenlocker`.
+
+Додайте власні імена, наприклад:
+
+```js
+var EXCEPTIONS = [
+    "spectacle",
+    "xscreensaver",
+    "kscreenlocker",
+    "my-app"
+];
+```
+
+Після зміни перезавантажте скрипт (див. вище).
+
+#### Як дізнатися фактичні імена вікна
+
+`print()` з KWin-скрипта **не потрапляє** в `journalctl`, тому діагностика йде
+через D-Bus. Запустіть пробу в окремому вікні термінала:
+
+```bash
+python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
+```
+
+Далі поставте `var DEBUG = true;` у початку `main.js`, перезавантажте скрипт
+і подивіться результат:
+
+```bash
+tail -f /tmp/kwinprobe.out
+```
+
+Для кожного нового вікна буде два рядки — про створення і про рішення скрипта:
+
+```
+window-margins: added caption=Не збережено* — Spectacle resourceName=spectacle resourceClass=org.kde.spectacle normalWindow=true
+window-margins: EXCLUDED class=org.kde.spectacle
+```
+
+для звичайного вікна замість `EXCLUDED` буде `APPLIED` із розрахованою геометрією:
+
+```
+window-margins: APPLIED class=org.kde.konsole to 8,8 1904x1016
+```
+
+Скопуйте підходяще ім'я (`resourceName`, `resourceClass` або частину `caption`)
+у список `EXCEPTIONS`, перезавантажте скрипт і поставте `DEBUG = false;`.
 
 ### Перевірка
 
 ```bash
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
+qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
 # має повернути true
 ```
 
@@ -101,7 +159,7 @@ python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
 ```bash
 rm -rf ~/.local/share/kwin/scripts/window-margins
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
 ### Приклад на вашій сесії
@@ -179,10 +237,12 @@ mkdir -p ~/.local/share/kwin/scripts
 cp -a window-margins ~/.local/share/kwin/scripts/
 
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
-If `kwriteconfig6`/`qdbus6` are not available:
+> **Note for Fedora:** on Fedora 45 the command is `qdbus` (or `qdbus-qt6`), not `qdbus6`. The `install.sh`/`uninstall.sh` scripts automatically look for `qdbus-qt6`, `qdbus` and `qdbus6`.
+
+If `kwriteconfig6`/`qdbus` are not available:
 
 ```bash
 gdbus call --session --dest org.kde.KWin --object-path /KWin \
@@ -196,15 +256,70 @@ After changing, reload the script:
 
 ```bash
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled true
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
+
+### Exceptions list
+
+The `EXCEPTIONS` constant in the same file lists window names to which the margin rules
+are **not** applied. Comparison is done against the window's `resourceClass`,
+`resourceName` and `caption` (title) — case-insensitive and **by substring**, so the
+entry `"spectacle"` matches both `resourceName = spectacle` and
+`resourceClass = org.kde.spectacle`.
+
+By default the list contains: `spectacle` (screenshots/screensaver), `xscreensaver`,
+`kscreenlocker`.
+
+Add your own names, for example:
+
+```js
+var EXCEPTIONS = [
+    "spectacle",
+    "xscreensaver",
+    "kscreenlocker",
+    "my-app"
+];
+```
+
+After changing, reload the script (see above).
+
+#### How to find the actual window names
+
+`print()` from a KWin script does **not** reach `journalctl`, so diagnostics go over
+D-Bus. Start the probe in a separate terminal:
+
+```bash
+python3 tools/kwin_dbus_probe.py /tmp/kwinprobe.out
+```
+
+Then set `var DEBUG = true;` at the top of `main.js`, reload the script and watch:
+
+```bash
+tail -f /tmp/kwinprobe.out
+```
+
+Every new window produces two lines — creation and the script's decision:
+
+```
+window-margins: added caption=Не збережено* — Spectacle resourceName=spectacle resourceClass=org.kde.spectacle normalWindow=true
+window-margins: EXCLUDED class=org.kde.spectacle
+```
+
+For a regular window you get `APPLIED` with the computed geometry instead:
+
+```
+window-margins: APPLIED class=org.kde.konsole to 8,8 1904x1016
+```
+
+Copy the matching value (`resourceName`, `resourceClass` or part of `caption`) into
+the `EXCEPTIONS` list, reload the script and set `DEBUG = false;`.
 
 ### Verification
 
 ```bash
-qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
+qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.isScriptLoaded window-margins
 # should return true
 ```
 
@@ -229,7 +344,7 @@ Or manually:
 ```bash
 rm -rf ~/.local/share/kwin/scripts/window-margins
 kwriteconfig6 --file kwinrc --group Plugins --key window-marginsEnabled false
-qdbus6 org.kde.KWin /KWin reconfigure
+qdbus org.kde.KWin /KWin reconfigure
 ```
 
 ### Example on your session

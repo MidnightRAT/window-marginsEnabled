@@ -15,10 +15,12 @@ else
     sed -i "/^${SCRIPT_ID}Enabled=/d" "$KWINRC"
 fi
 
-if command -v qdbus6 >/dev/null 2>&1; then
-    qdbus6 org.kde.KWin /KWin reconfigure
+if command -v qdbus-qt6 >/dev/null 2>&1; then
+    qdbus-qt6 org.kde.KWin /KWin reconfigure
 elif command -v qdbus >/dev/null 2>&1; then
     qdbus org.kde.KWin /KWin reconfigure
+elif command -v qdbus6 >/dev/null 2>&1; then
+    qdbus6 org.kde.KWin /KWin reconfigure
 else
     gdbus call --session --dest org.kde.KWin --object-path /KWin --method org.kde.KWin.reconfigure
 fi
