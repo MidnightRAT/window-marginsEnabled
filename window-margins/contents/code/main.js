@@ -15,7 +15,7 @@ var EXCEPTIONS = [
 // Увімкніть true, щоб бачити дані кожного нового вікна у виводі KWin
 // (зазвичай потрапляє в journalctl --user або stderr KWin).
 // Це допоможе підібрати правильні імена для EXCEPTIONS.
-var DEBUG = false;
+var DEBUG = true;
 
 function logWindow(win) {
     if (!DEBUG || !win) {
