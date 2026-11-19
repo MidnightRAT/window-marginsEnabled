@@ -24,6 +24,18 @@ else
     fi
 fi
 
+# KWin does NOT unload a script when its plugin flag changes: a stale
+# in-memory instance keeps running the old code even after the files on
+# disk are replaced. Drop it explicitly so the reconfigure below loads
+# the freshly copied files instead of the cached ones.
+if command -v qdbus-qt6 >/dev/null 2>&1; then
+    qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$SCRIPT_ID" >/dev/null 2>&1 || true
+elif command -v qdbus >/dev/null 2>&1; then
+    qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$SCRIPT_ID" >/dev/null 2>&1 || true
+elif command -v qdbus6 >/dev/null 2>&1; then
+    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$SCRIPT_ID" >/dev/null 2>&1 || true
+fi
+
 if command -v qdbus-qt6 >/dev/null 2>&1; then
     qdbus-qt6 org.kde.KWin /KWin reconfigure
 elif command -v qdbus >/dev/null 2>&1; then

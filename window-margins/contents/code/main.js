@@ -7,6 +7,7 @@ var MARGIN = 8;
 // (порівняння без урахування регістру; для caption — по підстрокі).
 // Наприклад: spectacle (скріншоти / скрінсейвер), xscreensaver, kscreenlocker тощо.
 var EXCEPTIONS = [
+    "vlc",
     "kcalc",
     "spectacle",
     "xscreensaver",

@@ -25,4 +25,15 @@ else
     gdbus call --session --dest org.kde.KWin --object-path /KWin --method org.kde.KWin.reconfigure
 fi
 
+# Flipping the plugin flag does not unload an already running script in
+# KWin: without this call the old code keeps working after the files
+# have been removed.
+if command -v qdbus-qt6 >/dev/null 2>&1; then
+    qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$SCRIPT_ID" >/dev/null 2>&1 || true
+elif command -v qdbus >/dev/null 2>&1; then
+    qdbus org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$SCRIPT_ID" >/dev/null 2>&1 || true
+elif command -v qdbus6 >/dev/null 2>&1; then
+    qdbus6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "$SCRIPT_ID" >/dev/null 2>&1 || true
+fi
+
 echo "Window margins script removed."
